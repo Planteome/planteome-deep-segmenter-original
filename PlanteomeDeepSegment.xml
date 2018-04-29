@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<module name="PlanteomeDeepSegment" type="runtime" >
+
+    <tag name="inputs">
+        <tag name="mex_url"      type="system-input" />
+        <tag name="bisque_token" type="system-input" />
+        <tag name="image_url" type="image">
+            <template>
+                <tag name="label" value="Select input image" />
+                <tag name="accepted_type" value="image" />
+                <tag name="require_geometry">
+                    <tag name="z" value="single" />
+                    <tag name="t" value="single" />
+                    <tag name="fail_message" value="Only 2D images supported!" />
+                </tag>
+            </template>
+        
+            <gobject name="roi">
+                <template>
+                    <tag name="gobject" value="freehand_line" />
+		            <tag name="gobject" value="foreground">
+		                <tag name="color" value="#00FF00" type="color" />
+		            </tag>
+		            <tag name="gobject" value="background">
+		                <tag name="color" value="#0000FF" type="color" />
+		            </tag>
+		    <tag name="semantic_types" value="require" />
+                   
+                </template>
+            </gobject>
+        </tag>
+
+
+     <tag name="deepNetworkChoice" value="Simple classification" type="combo">
+            <template>
+                <tag name="label" value="Pretrained network architecture"/>
+                <tag name="select">
+	                <value>Simple classification</value>
+                    <value>Retrieval-based Classification</value>
+                    <value>Associative Learning Classification</value>
+                    <value>None</value>
+
+		</tag>
+                <tag name="editable" value="false" type="boolean"/>
+                <tag name="description" value="Pretrained network to use for classification (vgg is currently the main choice)" />
+            </template>
+        </tag>
+        <tag name="segmentImage" value="True" type="combo">
+            <template>
+                <tag name="label" value="Graph cut image segmentation"/>
+                <tag name="select">
+                    <value>True</value>
+                    <value>False</value>
+                </tag>
+                <tag name="editable" value="false" type="boolean"/>
+                <tag name="description" value="Whether to use graph cuts to segment input image based on line annotations" />
+            </template>
+        </tag>
+        <tag name="qualitySeg" value="3" type="number" >
+            <template>
+                <tag name="label" value="Segmentation quality" />
+                <tag name="minValue" value="1" type="number" />
+                <tag name="maxValue" value="20" type="number" />
+                <tag name="step" value="1" type="number" />
+                <tag name="stepSlider" value="1" type="number" />
+                <tag name="hideNumberPicker" value="true" type="boolean" />
+                <tag name="allowDecimals" value="false" type="boolean" />
+                <tag name="description" value="Quality of segmentation (1-20)" />
+            </template>
+        </tag>
+        <tag name="deepSeg" value="False" type="combo">
+            <template>
+                <tag name="label" value="Classify segmented image"/>
+                <tag name="select">
+                    <value>True</value>
+                    <value>False</value>
+                </tag>
+                <tag name="editable" value="false" type="boolean"/>
+                <tag name="description" value="Whether to use segmented image as the input to the classifier" />
+            </template>
+        </tag>
+ 
+    </tag>
+
+
+    <tag name="outputs">
+        <tag name="Final Image" type="image">
+            <template>
+                <tag name="label" value="Output image." />
+            </template>
+	    <gobject name="Annotations" type="Annotations">
+	    </gobject>
+        </tag>  
+	<tag name="summary">
+		<template>
+			<tag name="label" value="Classification summary"/>
+		</template>
+	</tag>
+    </tag>   
+    <!--<tag name="outputs">
+        <tag name="Final Image" type="image">
+            <template>
+                <tag name="label" value="Output image with classification score." />
+            </template>
+            <gobject name="Classification score" />
+        </tag>
+    </tag>-->
+
+    <tag name="execute_options">
+        <tag name="argument_style" value="position" />
+    </tag>
+
+    <tag name="module_options" >
+        <tag name="version" value="1.0" />
+    </tag>
+
+    <tag name="display_options" >
+        <tag name="group" value="Segmentation" />
+    </tag>
+    <tag name="interface">
+        <tag name="javascript" type="file" value="javascript_override.js" />
+    </tag>
+    <tag name="title" value="Classification of Images using Deep Learning" />
+    <tag name="authors" value="Dimitrios Trigkakis, Justin Preece" />
+    <tag name="help" type="file" value="public/help.html" />
+
+    <tag name="thumbnail" type="file" value="public/thumbnail.png" />
+    <tag name="description" type="string" value="This application allows a user to classify an image using deep learning methods." />
+
+</module>
