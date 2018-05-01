@@ -125,6 +125,6 @@
     <tag name="help" type="file" value="public/help.html" />
 
     <tag name="thumbnail" type="file" value="public/thumbnail.png" />
-    <tag name="description" type="string" value="This application allows a user to classify an image using deep learning methods." />
+    <tag name="description" type="string" value="This application allows a user to classify features of plant images using a deep learning model." />
 
 </module>
