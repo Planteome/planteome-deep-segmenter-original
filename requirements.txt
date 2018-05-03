@@ -1,0 +1,13 @@
+bqapi==0.5.9
+opencv-python==3.4.0.12
+lxml==3.7.3
+numpy==1.14.3
+PyMaxflow==1.2.8
+scikit-image==0.13.1
+torch==0.4.0
+# pip install http://download.pytorch.org/whl/cu90/torch-0.3.0.post4-cp27-cp27mu-linux_x86_64.whl 
+torchvision==0.2.1
+matplotlob==2.2.2
+scipy==1.0.1
+# matplotlib.pyplot
+# scipy.misc
