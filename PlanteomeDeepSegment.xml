@@ -30,7 +30,6 @@
             </gobject>
         </tag>
 
-
      <tag name="deepNetworkChoice" value="Simple classification" type="combo">
             <template>
                 <tag name="label" value="Pretrained network architecture"/>
@@ -82,7 +81,6 @@
  
     </tag>
 
-
     <tag name="outputs">
         <tag name="Final Image" type="image">
             <template>
@@ -97,14 +95,6 @@
 		</template>
 	</tag>
     </tag>   
-    <!--<tag name="outputs">
-        <tag name="Final Image" type="image">
-            <template>
-                <tag name="label" value="Output image with classification score." />
-            </template>
-            <gobject name="Classification score" />
-        </tag>
-    </tag>-->
 
     <tag name="execute_options">
         <tag name="argument_style" value="position" />
