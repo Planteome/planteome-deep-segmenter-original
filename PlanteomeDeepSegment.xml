@@ -34,9 +34,9 @@
             <template>
                 <tag name="label" value="Pretrained network architecture"/>
                 <tag name="select">
+	                
 	                <value>Simple classification</value>
-                    <value>Retrieval-based Classification</value>
-                    <value>Associative Learning Classification</value>
+                    <value>Leaf classification</value>
                     <value>None</value>
 
 		</tag>

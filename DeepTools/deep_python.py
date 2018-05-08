@@ -149,3 +149,29 @@ if network == "Simple classification":
 	print "CONFIDENCE_C:","%.2f" % round(conf.numpy()[0],2)
 	# print "DATA INFORMATION",rois[0],rois[1],rois[2],segment,network,mex,token
 
+if network == "Leaf classification":
+
+	dualnet = models_leaves.resnet18_leaf(pretrained=False)
+	dualnet.reform()
+	
+	criterion = nn.NLLLoss()
+	m = nn.LogSoftmax()
+	# cpu model for inference. The model itself is a gpu model, so we need to have the map_location arguments
+	dualnet.load_state_dict(torch.load("/home/dimitris/Bisque/modules/PlanteomeDeepSegment/DeepModels/leaf_model.pth", map_location=lambda storage, loc:storage))
+	dualnet.eval()
+
+	transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.549,0.570,0.469),(0.008,0.0085,0.0135))])
+	
+	if deepsegment == "True":
+	    img_raw = img3
+
+	img = imresize(img_raw, (int(224),int(224)))
+	img_tensor = transform(img)
+	img_tensor = img_tensor.expand(1,3,224,224)
+	data = Variable(img_tensor, volatile=True)
+
+	output_class = dualnet(data)	
+	softmax = nn.Softmax()
+	for i in range(6):
+		print(softmax(output_class[i]).data.max(1)[1].numpy()[0])
+
