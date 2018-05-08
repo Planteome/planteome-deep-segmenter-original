@@ -207,7 +207,7 @@ class SkeletonPython(object):
 					break
 		etree.SubElement(outputSubTagSummary, 'tag',name='Class', value=str(prediction_c))
 		link_direction = str(prediction_c).index("): ")+3
-		etree.SubElement(outputSubTagSummary, 'tag',type='link',name='Class link', value=str(prediction_c)[link_direction:])
+		etree.SubElement(outputSubTagSummary, 'tag',type='link',name='Accession', value=str(prediction_c)[link_direction:])
 		etree.SubElement(outputSubTagSummary, 'tag', name='Class Confidence', value=str(confidence_c))
 	elif self.options.deepNetworkChoice == "Leaf classification":
 		leaf_targets = {'LeafType':["SIMPLE","COMPOUND","NONE"],'LeafShape':["ACEROSE","AWL-SHAPED","GLADIATE","HASTATE","CORDATE","DELTOID","LANCEOLATE","LINEAR","ELLIPTIC","ENSIFORM","LYRATE",
