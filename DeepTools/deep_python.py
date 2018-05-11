@@ -29,6 +29,7 @@ from PIL import Image
 import subprocess
 import scipy.io as sio
 import models
+import models_leaves
 from threading import Thread, Lock
 import DGC
 import logging
@@ -128,7 +129,7 @@ if network == "Simple classification":
 
 	transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.549,0.570,0.469),(0.008,0.0085,0.0135))])
 	
-	if deepsegment == "True":
+	if deepsegment == "True" and segment == "True":
 	    img_raw = img3
 
 	img = imresize(img_raw, (int(224),int(224)))
@@ -162,7 +163,7 @@ if network == "Leaf classification":
 
 	transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.549,0.570,0.469),(0.008,0.0085,0.0135))])
 	
-	if deepsegment == "True":
+	if deepsegment == "True" and segment == "True":
 	    img_raw = img3
 
 	img = imresize(img_raw, (int(224),int(224)))

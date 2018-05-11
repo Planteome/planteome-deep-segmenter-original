@@ -12,6 +12,8 @@ import logging
 import os
 import pickle
 import sys
+import copy
+import csv
 
 try:
     # noinspection PyPep8Naming
@@ -38,6 +40,7 @@ PICKLE_CONTOURS_FILE = 'contours.pkl'
 PICKLE_DATA_FILE = 'data.p'
 TEXT_RESULTS_FILE = 'results.txt'
 TIFF_IMAGE_FILE = 'temp.tif'
+
 
 logging.basicConfig(level=logging.DEBUG)
 log = logging.getLogger('bq.modules')
@@ -303,43 +306,13 @@ class PlanteomeDeepSegment(object):
         log.debug('{}.teardown()> message on entry, options={}'.format(MODULE_NAME, self.options))
         self.bqSession.update_mex('Returning results...')
 
-        # get prediction and confidence
-        prediction_c = -1
-        confidence_c = 0.0
-        prediction_t = -1
-        confidence_t = 0.0
-        try:
-            with open(self.results_file, 'r') as f:
-                for _line in f:
-                    if _line.strip() != '':
-                        log.debug('{}.teardown()> _line={}'.format(MODULE_NAME, _line))
-                        if 'PREDICTION_C:' in _line:
-                            prediction_c = int(_line.split(':')[1].strip())
-                        if 'CONFIDENCE_C:' in _line:
-                            confidence_c = float(_line.split(':')[1].strip())
-                        if 'PREDICTION_T:' in _line:
-                            prediction_t = int(_line.split(':')[1].strip())
-                        if 'CONFIDENCE_T:' in _line:
-                            confidence_t = float(_line.split(':')[1].strip())
-        except IOError as e:
-            self.message = '{}.teardown()> io error reading results, e={}'.format(MODULE_NAME, str(e))
-            log.error(self.message)
-        finally:
-            log.debug('{}.teardown()> prediction_c={}'.format(MODULE_NAME, prediction_c))
-            log.debug('{}.teardown()> confidence_c={}'.format(MODULE_NAME, confidence_c))
-            log.debug('{}.teardown()> prediction_t={}'.format(MODULE_NAME, prediction_t))
-            log.debug('{}.teardown()> confidence_t={}'.format(MODULE_NAME, confidence_t))
+        print('Module will output image, {}'.format(self.options.image_url))
 
-        # annotate with prediction
-        classes = ['leaf', 'fruit', 'flower', 'stem', 'entire']
-        prediction_c = classes[prediction_c] if (0 <= prediction_c <= len(classes)) else 'unknown'
+        # segment the image (if required)
 
         output_tag = eTree.Element('tag', name='outputs')
         output_sub_tag_image = eTree.SubElement(output_tag, 'tag', name='Final Image', value=self.options.image_url)
 
-        print('Module will output image, {}'.format(self.options.image_url))
-
-        # segment the image (if required)
         if self.options.segmentImage.lower() == 'true' and os.path.isfile(self.contours_file):
             log.debug('{}.teardown()> module will segment image from file {}'.format(MODULE_NAME, self.contours_file))
 
@@ -361,15 +334,107 @@ class PlanteomeDeepSegment(object):
 
         # set tag(s)
         if getattr(self.options, 'deepNetworkChoice', '') != '' and self.options.deepNetworkChoice.lower() != 'none':
-            output_sub_tag_summary = eTree.SubElement(output_tag, 'tag', name='summary')
-            eTree.SubElement(output_sub_tag_summary, 'tag', name='Model File', value=self.options.deepNetworkChoice)
-            if getattr(self.options, 'segmentImage', '') != '':
-                eTree.SubElement(output_sub_tag_summary, 'tag', name='Segment Image', value=self.options.segmentImage)
-            eTree.SubElement(output_sub_tag_summary, 'tag', name='Class', value=prediction_c)
-            eTree.SubElement(output_sub_tag_summary, 'tag', name='Class Confidence', value=str(confidence_c))
+            if self.options.deepNetworkChoice.lower() == 'simple classification':
+                # get prediction and confidence
+                prediction_c = -1
+                confidence_c = 0.0
+                prediction_t = -1
+                confidence_t = 0.0
+                try:
+                    with open(self.results_file, 'r') as f:
+                        for _line in f:
+                            if _line.strip() != '':
+                                log.debug('{}.teardown()> _line={}'.format(MODULE_NAME, _line))
+                                if 'PREDICTION_C:' in _line:
+                                    prediction_c = int(_line.split(':')[1].strip())
+                                if 'CONFIDENCE_C:' in _line:
+                                    confidence_c = float(_line.split(':')[1].strip())
+                                if 'PREDICTION_T:' in _line:
+                                    prediction_t = int(_line.split(':')[1].strip())
+                                if 'CONFIDENCE_T:' in _line:
+                                    confidence_t = float(_line.split(':')[1].strip())
+                except IOError as e:
+                    self.message = '{}.teardown()> io error reading results, e={}'.format(MODULE_NAME, str(e))
+                    log.error(self.message)
+                finally:
+                    log.debug('{}.teardown()> prediction_c={}'.format(MODULE_NAME, prediction_c))
+                    log.debug('{}.teardown()> confidence_c={}'.format(MODULE_NAME, confidence_c))
+                    log.debug('{}.teardown()> prediction_t={}'.format(MODULE_NAME, prediction_t))
+                    log.debug('{}.teardown()> confidence_t={}'.format(MODULE_NAME, confidence_t))
 
-            self.bqSession.finish_mex(tags=[output_tag])
-            self.bqSession.close()
+                # annotate with prediction
+                classes = ["Leaf (PO:0025034): http://browser.planteome.org/amigo/term/PO:0025034","Fruit (PO:0009001): http://browser.planteome.org/amigo/term/PO:0009001","Flower (PO:0009046): http://browser.planteome.org/amigo/term/PO:0009046","Stem (PO:0009047): http://browser.planteome.org/amigo/term/PO:0009047","Whole plant (PO:0000003): http://browser.planteome.org/amigo/term/PO:0000003 "]
+
+                prediction_c = classes[prediction_c] if (0 <= prediction_c <= len(classes)) else 'unknown'
+
+                output_sub_tag_summary = eTree.SubElement(output_tag, 'tag', name='summary')
+
+                link_direction = str(prediction_c).index("): ")+3
+
+                eTree.SubElement(output_sub_tag_summary, 'tag', name='Model File', value=self.options.deepNetworkChoice)
+                if getattr(self.options, 'segmentImage', '') != '':
+                    eTree.SubElement(output_sub_tag_summary, 'tag', name='Segment Image', value=self.options.segmentImage)
+                eTree.SubElement(output_sub_tag_summary, 'tag', name='Class', value=prediction_c)
+                eTree.SubElement(output_sub_tag_summary, 'tag',type='link',name='Accession', value=str(prediction_c)[link_direction:])
+                eTree.SubElement(output_sub_tag_summary, 'tag', name='Class Confidence', value=str(confidence_c))
+            
+            if self.options.deepNetworkChoice.lower() == 'leaf classification':
+                leaf_targets = {'LeafType':["SIMPLE","COMPOUND","NONE"],'LeafShape':["ACEROSE","AWL-SHAPED","GLADIATE","HASTATE","CORDATE","DELTOID","LANCEOLATE","LINEAR","ELLIPTIC","ENSIFORM","LYRATE",
+				   "OBCORDATE","FALCATE","FLABELLATE","OBDELTOID","OBELLIPTIC","OBLANCEOLATE","OBLONG","PERFOLIATE","QUADRATE","OBOVATE","ORBICULAR",
+				   "RENIFORM","RHOMBIC","OVAL","OVATE","ROTUND","SAGITTATE","PANDURATE","PELTATE","SPATULATE","SUBULATE","NONE"],
+				'Leafbaseshape':["AEQUILATERAL","ATTENUATE","AURICULATE","CORDATE","CUNEATE","HASTATE","OBLIQUE","ROUNDED","SAGITTATE","TRUNCATE","NONE"],
+				'Leaftipshape': ["CIRROSE","CUSPIDATE","ACUMINATE","ACUTE","EMARGINATE","MUCRONATE","APICULATE","ARISTATE","MUCRONULATE","MUTICOUS","ARISTULATE","CAUDATE","OBCORDATE","OBTUSE","RETUSE","ROUNDED","SUBACUTE","TRUNCATE","NONE"]
+				   ,'Leafmargin':["BIDENTATE","BIFID","DENTATE","DENTICULATE","BIPINNATIFID","BISERRATE","DIGITATE","DISSECTED","CLEFT","CRENATE","DIVIDED","ENTIRE","CRENULATE","CRISPED","EROSE","INCISED","INVOLUTE","LACERATE","PEDATE","PINNATIFID","LACINIATE","LOBED","PINNATILOBATE","PINNATISECT","LOBULATE","PALMATIFID","REPAND","REVOLUTE","PALMATISECT","PARTED","RUNCINATE","SERRATE","SERRULATE","SINUATE","TRIDENTATE","TRIFID","TRIPARTITE","TRIPINNATIFID","NONE"],'Leafvenation':["RETICULATE","PARALLEL","NONE"]}
+
+        
+                leaf_keys_proper_names  =['Leaf Type','Leaf Shape','Leaf Base Shape','Leaf Tip Shape','Leaf Margin','Leaf Venation']
+                leaf_keys  =['LeafType','LeafShape','Leafbaseshape','Leaftipshape','Leafmargin','Leafvenation']
+                leaf_targets_links = copy.deepcopy(leaf_targets)
+                for k in leaf_targets_links.keys():
+                    for j in range(len(leaf_targets_links[k])):
+                        leaf_targets_links[k][j] = 'undefined'
+        
+                with open("./LeafMappings.csv") as csvfile:
+                    reader = csv.reader(csvfile, delimiter=',',quotechar='|')
+            
+                    current_name = ''
+                    for row in reader:
+                        name = row[0]
+                        po_term = row[1]
+                        if po_term == '':
+                            po_term = "undefined"
+                        for leaf_category in leaf_targets_links.keys():
+                            if name.replace(" ","").lower() == leaf_category.replace(" ","").lower():
+                                current_name = leaf_category
+                                break
+                        if current_name in leaf_targets.keys(): 
+                            for leaf_category in leaf_targets[current_name]:
+                                if name.replace(" ","").lower() == leaf_category.replace(" ","").lower():
+                                    i = leaf_targets[current_name].index(leaf_category)
+                                    leaf_targets_links[current_name][i] = po_term
+                                    break           
+
+                output_sub_tag_summary = eTree.SubElement(output_tag, 'tag', name='summary')
+                eTree.SubElement(output_sub_tag_summary, 'tag',name='Model File', value=self.options.deepNetworkChoice)
+                eTree.SubElement(output_sub_tag_summary, 'tag',name='Segment Image', value=self.options.segmentImage)
+                with open("./results.txt","r") as f:
+                    class_list = []
+                    for i, line in enumerate(f):
+                        log.debug("i {}, line {}".format(i, line))
+                        # Remove after introduction of the leaf classifier (below start with appends)
+                        if int(line) == len(leaf_targets[leaf_keys[i]])-1:
+                            line = '0'
+                        class_list.append(line)
+                        
+                                      
+                        eTree.SubElement(output_sub_tag_summary, 'tag',name=leaf_keys_proper_names[i]+"-Name", value=str(leaf_targets[leaf_keys[i]][int(class_list[i])]))
+                        if str(leaf_targets_links[leaf_keys[i]][int(class_list[i])]) != 'undefined':
+                            eTree.SubElement(output_sub_tag_summary, 'tag',type='link',name=leaf_keys_proper_names[i]+'-Accession', value=str('http://browser.planteome.org/amigo/term/'+leaf_targets_links[leaf_keys[i]][int(class_list[i])]))
+                        else:
+                            eTree.SubElement(output_sub_tag_summary, 'tag',name=leaf_keys_proper_names[i]+'-Accession', value=str(leaf_targets_links[leaf_keys[i]][int(class_list[i])]))                                                                                   
+
+        self.bqSession.finish_mex(tags=[output_tag])
+        self.bqSession.close()
 
         # exit message
         log.debug('{}.teardown()> message on exit, options={}'.format(MODULE_NAME, self.options))
