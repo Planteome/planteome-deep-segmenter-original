@@ -161,7 +161,7 @@ if network == "Leaf classification":
 	dualnet.load_state_dict(torch.load("/home/dimitris/Bisque/modules/PlanteomeDeepSegment/DeepModels/leaf_model.pth", map_location=lambda storage, loc:storage))
 	dualnet.eval()
 
-	transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.549,0.570,0.469),(0.008,0.0085,0.0135))])
+	transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.7446,0.7655,0.7067),(0.277,0.24386,0.33867))])
 	
 	if deepsegment == "True" and segment == "True":
 	    img_raw = img3
