@@ -106,6 +106,9 @@ def segmentation_processing():
 	black = myimg2[:,:,0] == 0
 
 	myimg[black] = [0.549*255, 0.570*255, 0.469*255]
+	if network == "Leaf classification":
+		myimg[black] = [0.7446*255,0.7655*255,0.7067*255]
+		
 	img3 = myimg.astype(np.uint8)
 	
 	show(img3,"./segmentation_result_masked.png")
