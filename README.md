@@ -1,5 +1,4 @@
-
-#Planteome Deep Segmenter - Segmentation and classification module built for the CyVerse BisQue image analysis environment.
+# Planteome Deep Segmenter - Segmentation and classification module built for the CyVerse BisQue image analysis environment.
 
 This software is licensed under a Creative Commons Attribution-NonCommercial-NoDerivatives 4.0 International (CC BY-NC-ND 4.0) license.
 
