@@ -1,1 +1,1 @@
-/home/dimitris/Bisque/modules/PlanteomeDeepSegment/penv/bin/activate
+/source/modules/PlanteomeDeepSegment/penv/bin/activate

@@ -50,7 +50,8 @@
                 <tag name="select">
                     <value>True</value>
                     <value>False</value>
-                </tag>
+	    </tag>
+	    	
                 <tag name="editable" value="false" type="boolean"/>
                 <tag name="description" value="Whether to use graph cuts to segment input image based on line annotations" />
             </template>
@@ -67,6 +68,7 @@
                 <tag name="description" value="Quality of segmentation (1-20)" />
             </template>
         </tag>
+    	
         <tag name="deepSeg" value="False" type="combo">
             <template>
                 <tag name="label" value="Classify segmented image"/>
@@ -78,9 +80,29 @@
                 <tag name="description" value="Whether to use segmented image as the input to the classifier" />
             </template>
         </tag>
- 
-    </tag>
-
+ 	<tag name="gpuMode" value="False" type="combo">
+		<template>
+			<tag name="label" value="Use gpu mode"/>
+		<tag name="select">
+			<value>True</value>
+			<value>False</value>
+		</tag>
+		<tag name="editable" value="false" type="boolean"/>
+		<tag name="description" value="Whether to instantiate a gpu or cpu classification model"/>
+	</template>
+	</tag>
+	<tag name="groupMode" value="False" type="combo">
+		<template>
+			<tag name="label" value="Use grouped-category mode"/>
+			<tag name="select">
+				<value>True</value>
+				<value>False</value>
+			</tag>
+			<tag name="editable" value="false" type="boolean"/>
+			<tag name="description" value="Whether to group together leaf classification categories"/>
+		</template>
+	</tag>
+</tag>
     <tag name="outputs">
         <tag name="Final Image" type="image">
             <template>

@@ -284,7 +284,7 @@ class PlanteomeDeepSegment(object):
                 log.debug('{}.run()> pickling data to {}'.format(
                     MODULE_NAME, self.data_file))
                 pickle.dump([self.rois, self.options.segmentImage, self.options.deepNetworkChoice,
-                             self.options.qualitySeg, self.options.deepSeg, self.options.mexURL, self.options.token],
+                    self.options.qualitySeg, self.options.deepSeg, self.options.gpuMode, self.options.groupMode, self.options.mexURL, self.options.token],
                             open(self.data_file, 'wb'))
         except AttributeError as e:
             self.message('{}.run()> failed to pickle data, e={}'.format(MODULE_NAME, str(e)))
@@ -386,6 +386,21 @@ class PlanteomeDeepSegment(object):
 				'Leaftipshape': ["CIRROSE","CUSPIDATE","ACUMINATE","ACUTE","EMARGINATE","MUCRONATE","APICULATE","ARISTATE","MUCRONULATE","MUTICOUS","ARISTULATE","CAUDATE","OBCORDATE","OBTUSE","RETUSE","ROUNDED","SUBACUTE","TRUNCATE","NONE"]
 				   ,'Leafmargin':["BIDENTATE","BIFID","DENTATE","DENTICULATE","BIPINNATIFID","BISERRATE","DIGITATE","DISSECTED","CLEFT","CRENATE","DIVIDED","ENTIRE","CRENULATE","CRISPED","EROSE","INCISED","INVOLUTE","LACERATE","PEDATE","PINNATIFID","LACINIATE","LOBED","PINNATILOBATE","PINNATISECT","LOBULATE","PALMATIFID","REPAND","REVOLUTE","PALMATISECT","PARTED","RUNCINATE","SERRATE","SERRULATE","SINUATE","TRIDENTATE","TRIFID","TRIPARTITE","TRIPINNATIFID","NONE"],'Leafvenation':["RETICULATE","PARALLEL","NONE"]}
 
+                mini_targets = {"LeafType":[['SIMPLE'],["COMPOUND"]],
+                            "Leafmargin":[['CRENATE', 'CRENULATE', 'DENTATE', 'DENTICULATE', 'SERRATE', 'SERRULATE', 'BISERRATE','EROSE'],
+                                ['ENTIRE'],
+                                ['BIPINNATIFID', 'DISSECTED', 'PINATTIFID', 'LACINIATE', 'PINNATISECT', 'TRIPINNATIFID', 'DIVIDED'],
+                                ['DIGITATE', 'PEDATE', 'PALMATISECT', 'PALMATIFID'],
+                                ['CLEFT', 'INCISED', 'CRISPED', 'LACERATE', 'LOBED', 'SINUATE', 'PINNATILOBATE', 'LOBULATE', 'REPAND', 'PARTED', 'RUNCINATE', 'TRIPARTITE'],
+                                ['INVOLUTE', 'REVOLUTE'],
+                                ['BIDENTATE', 'BIFID', 'TRIDENTATE', 'TRIFID']],
+                            "LeafShape":[["ACEROSE",'GLADIATE','LINEAR','ENSIFORM','SUBULATE','FALCATE'],['AWL-SHAPED','PERFOLIATE','FLABELLATE'],['HASTATE','CORDATE','DELTOID','LANCEOLATE','SAGITTATE'],
+                                             ['ELLIPTIC','OBELLIPTIC','OBOVATE','OVAL','OVATE','ROTUND','PANDURATE'],['OBLANCEOLATE','OBLONG','SPATULATE','LYRATE'],
+                                                          ['ORBICULAR','RENIFORM','PELTATE','OBCORDATE','OBDELTOID'],['QUADRATE','RHOMBIC']],
+                            "Leafbaseshape":[['ATTENUATE','CUNEATE'],["AURICULATE",'CORDATE','HASTATE','SAGITTATE','TRUNCATE'],['AEQUILATERAL','OBLIQUE','ROUNDED']],
+                            "Leaftipshape":[['CIRROSE','APICULATE','ARISTATE','CAUDATE'],['CUSPIDATE','ACUMIANTE','MUCRONATE','MUCRONULATE','ARISTULATE'],['ACUTE','SUBACUTE']
+                                                ,['MUTICOUS','TRUNCATE'],['EMARGINATE','OBCORDATE','OBTUSE','RETUSE','ROUNDED']],
+                                            "Leafvenation":[['RETICULATE'],['PARALLEL']]}
         
                 leaf_keys_proper_names  =['Leaf Type','Leaf Shape','Leaf Base Shape','Leaf Tip Shape','Leaf Margin','Leaf Venation']
                 leaf_keys  =['LeafType','LeafShape','Leafbaseshape','Leaftipshape','Leafmargin','Leafvenation']
@@ -417,22 +432,37 @@ class PlanteomeDeepSegment(object):
                 output_sub_tag_summary = eTree.SubElement(output_tag, 'tag', name='summary')
                 eTree.SubElement(output_sub_tag_summary, 'tag',name='Model File', value=self.options.deepNetworkChoice)
                 eTree.SubElement(output_sub_tag_summary, 'tag',name='Segment Image', value=self.options.segmentImage)
-                with open("./results.txt","r") as f:
-                    class_list = []
-                    for i, line in enumerate(f):
-                        log.debug("i {}, line {}".format(i, line))
-                        # Remove after introduction of the leaf classifier (below start with appends)
-                        if int(line) == len(leaf_targets[leaf_keys[i]])-1:
-                            line = '0'
-                        class_list.append(line)
+                if self.options.groupMode =="False":
+                    with open("./results.txt","r") as f:
+                        class_list = []
+                        for i, line in enumerate(f):
+                            log.debug("i {}, line {}".format(i, line))
+                            # Remove after introduction of the leaf classifier (below start with appends)
+                            if int(line) == len(leaf_targets[leaf_keys[i]])-1:
+                                line = '0'
+                            class_list.append(line)
                         
                                       
-                        eTree.SubElement(output_sub_tag_summary, 'tag',name=leaf_keys_proper_names[i]+"-Name", value=str(leaf_targets[leaf_keys[i]][int(class_list[i])]))
-                        if str(leaf_targets_links[leaf_keys[i]][int(class_list[i])]) != 'undefined':
-                            eTree.SubElement(output_sub_tag_summary, 'tag',type='link',name=leaf_keys_proper_names[i]+'-Accession', value=str('http://browser.planteome.org/amigo/term/'+leaf_targets_links[leaf_keys[i]][int(class_list[i])]))
-                        else:
-                            eTree.SubElement(output_sub_tag_summary, 'tag',name=leaf_keys_proper_names[i]+'-Accession', value=str(leaf_targets_links[leaf_keys[i]][int(class_list[i])]))                                                                                   
+                            eTree.SubElement(output_sub_tag_summary, 'tag',name=leaf_keys_proper_names[i]+"-Name", value=str(leaf_targets[leaf_keys[i]][int(class_list[i])]))
+                            if str(leaf_targets_links[leaf_keys[i]][int(class_list[i])]) != 'undefined':
+                                eTree.SubElement(output_sub_tag_summary, 'tag',type='link',name=leaf_keys_proper_names[i]+'-Accession', value=str('http://browser.planteome.org/amigo/term/'+leaf_targets_links[leaf_keys[i]][int(class_list[i])]))
+                            else:
+                                eTree.SubElement(output_sub_tag_summary, 'tag',name=leaf_keys_proper_names[i]+'-Accession', value=str(leaf_targets_links[leaf_keys[i]][int(class_list[i])]))                                                                                   
+                else: 
+                    
+                    with open("./results.txt","r") as f:
+                        class_list = []
+                        for i, line in enumerate(f):
+                            if int(line) == len(leaf_targets[leaf_keys[i]])-1:
+                                line = '0'
+                            class_list.append(line)
+                            log.debug("For grouped categories {}".format(class_list[i]))
+                            category_str = ""
+                            for j in mini_targets[leaf_keys[i]][int(class_list[i])]:
+                                category_str += str(j)+" "
+                            eTree.SubElement(output_sub_tag_summary, "tag", name=leaf_keys_proper_names[i]+"-Names", value=category_str)
 
+                    
         self.bqSession.finish_mex(tags=[output_tag])
         self.bqSession.close()
 

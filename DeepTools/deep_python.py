@@ -34,6 +34,8 @@ from threading import Thread, Lock
 import DGC
 import logging
 
+
+
 def show(image_data, name):
 
         assert image_data is not None
@@ -56,7 +58,7 @@ def process(rois, name):
 	for roi in rois:
 		proper_polylines[name].append(DGC.polyline(roi))
 
-[rois,segment,network, quality,deepsegment,mex,token] = pickle.load(open('data.p','rb'))
+[rois,segment,network, quality,deepsegment, gpumode, groupedmode,mex,token] = pickle.load(open('data.p','rb'))
 process(rois['fg'],'fg')
 process(rois['bg'], 'bg')
 
@@ -127,11 +129,14 @@ if network == "Simple classification":
 	criterion = nn.NLLLoss()
 	m = nn.LogSoftmax()
 	# cpu model for inference. The model itself is a gpu model, so we need to have the map_location arguments
-	dualnet.load_state_dict(torch.load("/home/dimitris/Bisque/modules/PlanteomeDeepSegment/DeepModels/resnet_model.pth", map_location=lambda storage, loc:storage))
+	dualnet.load_state_dict(torch.load("/source/modules/PlanteomeDeepSegment/DeepModels/resnet_model.pth", map_location=lambda storage, loc:storage))
 	dualnet.eval()
 
 	transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.549,0.570,0.469),(0.008,0.0085,0.0135))])
 	
+        if gpumode == "True":
+            dualnet.cuda()
+
 	if deepsegment == "True" and segment == "True":
 	    img_raw = img3
 
@@ -155,23 +160,29 @@ if network == "Simple classification":
 
 if network == "Leaf classification":
 
-	dualnet = models_leaves.resnet18_leaf(pretrained=False)
-	dualnet.reform()
+        if groupedmode == "True":
+            dualnet = models_leaves.resnetAdapted([2,7,3,5,7,2])
+        else:
+            dualnet = models_leaves.resnetAdapted([2,32,10,18,38,2])
 	
 	criterion = nn.NLLLoss()
 	m = nn.LogSoftmax()
 	# cpu model for inference. The model itself is a gpu model, so we need to have the map_location arguments
-	dualnet.load_state_dict(torch.load("/home/dimitris/Bisque/modules/PlanteomeDeepSegment/DeepModels/leaf_model.pth", map_location=lambda storage, loc:storage))
+        if groupedmode == "True":
+            dualnet.load_state_dict(torch.load("/source/modules/PlanteomeDeepSegment/DeepModels/gpu_model_simplified.pth", map_location=lambda storage, loc:storage))            
+        else:
+            dualnet.load_state_dict(torch.load("/source/modules/PlanteomeDeepSegment/DeepModels/gpu_model_full.pth", map_location=lambda storage, loc:storage))
 	dualnet.eval()
-
+        if gpumode == "True":
+            dualnet.cuda()
 	transform = transforms.Compose([transforms.ToTensor(), transforms.Normalize((0.7446,0.7655,0.7067),(0.277,0.24386,0.33867))])
 	
 	if deepsegment == "True" and segment == "True":
 	    img_raw = img3
 
-	img = imresize(img_raw, (int(224),int(224)))
+	img = imresize(img_raw, (int(128),int(128)))
 	img_tensor = transform(img)
-	img_tensor = img_tensor.expand(1,3,224,224)
+	img_tensor = img_tensor.expand(1,3,128,128)
 	data = Variable(img_tensor, volatile=True)
 
 	output_class = dualnet(data)	
