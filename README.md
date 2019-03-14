@@ -13,8 +13,8 @@ Bisque configuration instructions for a dockerized BisQue instance:
 6. bisque is under /source, and virtualenv is activate with source /usr/lib/bisque/bin/activate (for commands bq-admin server stop/start/restart)
 7. Stop the container, start it again, 'exec' into it to make sure you can use bash (docker exec -it <container_name> /bin/bash)
 8. Go to 127.0.0.1:8080 and join as admin (password: admin)
-9. Under admin/module manager (top right corner), find the git cloned module PlanteomeDeepSegment (should be in source/modules/Pla..)
-10. Enter engine url :localhost:8080/engine_service and register the new module
+9. Under admin/module manager (top right corner), enter engine url :localhost:8080/engine_service in the field of the right panel
+10. Find the git cloned module PlanteomeDeepSegment (should be in source/modules/Pla..) and register it
 
 Module configuration instructions for dockerized BisQue hosts:
 
