@@ -24,3 +24,8 @@ Module configuration instructions for dockerized BisQue hosts:
 4. The staging path may also change (in runtime-module.cfg)
 5. The path to the models in ./DeepTools/deep_python.py needs to reflect the proper path for the installation (one path per model, three included so far)
 
+Running on palea:
+
+1. Get the image ID "docker container ls"
+2. Set it to run and respond on port 8989
+  docker run -d -p 8989:8080 IMAGE_ID
